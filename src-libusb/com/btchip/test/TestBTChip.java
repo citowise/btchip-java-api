@@ -47,7 +47,7 @@ public class TestBTChip {
 		byte[] outputScript = transactionParsed.getOutputs().get(1).getScript();
 		for (;;) {
 			BTChipInput input = dongle.getTrustedInput(transactionParsed, 1);
-			dongle.startUntrustedTransaction(true, 0, new BTChipInput[] { input }, outputScript);
+			dongle.startUntrustedTransaction(true, 0, new BTChipInput[] { input }, outputScript, false);
 		}
 		/*
 		dongle.finalizeInput(outputAddress, amount, fees, changePath);
