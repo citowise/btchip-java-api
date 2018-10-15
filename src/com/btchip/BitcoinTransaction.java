@@ -150,8 +150,8 @@ public class BitcoinTransaction {
 	public static final byte DEFAULT_SEQUENCE[] = { (byte)0xff, (byte)0xff, (byte)0xff, (byte)0xff };
 	
 	public BitcoinTransaction(ByteArrayInputStream data) throws BTChipException  {		
-		inputs = new Vector<BitcoinInput>();
-		outputs = new Vector<BitcoinOutput>();
+		inputs = new Vector<>();
+		outputs = new Vector<>();
 		try {
 			version = new byte[4];
 			data.read(version);
@@ -173,8 +173,8 @@ public class BitcoinTransaction {
 	
 	public BitcoinTransaction() {
 		version = new byte[0];
-		inputs = new Vector<BitcoinInput>();
-		outputs = new Vector<BitcoinOutput>();
+		inputs = new Vector<>();
+		outputs = new Vector<>();
 		lockTime = new byte[0];
 	}
 	

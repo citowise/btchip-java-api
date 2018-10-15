@@ -390,7 +390,7 @@ public class BTChipDongle implements BTChipConstants {
 	
 	public BTChipPublicKey getWalletPublicKey(String keyPath) throws BTChipException {
 		byte data[] = BIP32Utils.splitPath(keyPath);
-		byte response[] = exchangeApdu(BTCHIP_CLA, BTCHIP_INS_GET_WALLET_PUBLIC_KEY, (byte)0x00, (byte)0x00, data, OK);
+		byte response[] = exchangeApdu(BTCHIP_CLA, BTCHIP_INS_GET_WALLET_PUBLIC_KEY, (byte)0x00, (byte)0x01, data, OK);
 		int offset = 0;
 		byte publicKey[] = new byte[response[offset]];
 		offset++;
@@ -451,25 +451,31 @@ public class BTChipDongle implements BTChipConstants {
 		ByteArrayOutputStream data = new ByteArrayOutputStream();
 		BufferUtils.writeBuffer(data, BitcoinTransaction.DEFAULT_VERSION);
 		VarintUtils.write(data, usedInputList.length);
-		exchangeApdu(BTCHIP_CLA, BTCHIP_INS_HASH_INPUT_START, (byte)0x00,
-                (newTransaction ? (useSegWit ? (byte)0x02:(byte)0x00) : (byte)0x80), data.toByteArray(), OK);
+		byte p2NewTransactionTypeFlag = (newTransaction ? (useSegWit ? (byte)0x02:(byte)0x00) : (byte)0x80);
+		exchangeApdu(BTCHIP_CLA, BTCHIP_INS_HASH_INPUT_START, (byte)0x00, p2NewTransactionTypeFlag, data.toByteArray(), OK);
 		// Loop for each input
 		long currentIndex = 0;
 		for (BTChipInput input : usedInputList) {
 			byte[] script = (currentIndex == inputIndex ? redeemScript : new byte[0]);
 			data = new ByteArrayOutputStream();
-			data.write(input.isTrusted() ? (byte)0x01 : (byte)0x00);
-			if (input.isTrusted()) {
-				// untrusted inputs have constant length
-				data.write(input.getValue().length);
+			if (useSegWit) {
+				data.write((byte) 0x02);
+			} else {
+				data.write(input.isTrusted() ? (byte) 0x01 : (byte) 0x00);
+                if (input.isTrusted()) {
+                    // untrusted inputs have constant length
+                    data.write(input.getValue().length);
+                }
 			}
 			BufferUtils.writeBuffer(data, input.getValue());
 			VarintUtils.write(data, script.length);
-			exchangeApdu(BTCHIP_CLA, BTCHIP_INS_HASH_INPUT_START, (byte)0x80, (byte)0x00, data.toByteArray(), OK);
+			exchangeApdu(BTCHIP_CLA, BTCHIP_INS_HASH_INPUT_START, (byte)0x80, p2NewTransactionTypeFlag, data.toByteArray(), OK);
 			data = new ByteArrayOutputStream();
-			BufferUtils.writeBuffer(data, script);
+			if (script.length > 0) {
+                BufferUtils.writeBuffer(data, script);
+            }
 			BufferUtils.writeBuffer(data, BitcoinTransaction.DEFAULT_SEQUENCE);
-			exchangeApduSplit(BTCHIP_CLA, BTCHIP_INS_HASH_INPUT_START, (byte)0x80, (byte)0x00, data.toByteArray(), OK);
+			exchangeApduSplit(BTCHIP_CLA, BTCHIP_INS_HASH_INPUT_START, (byte)0x80, p2NewTransactionTypeFlag, data.toByteArray(), OK);
 			currentIndex++;			
 		}				
 	}
